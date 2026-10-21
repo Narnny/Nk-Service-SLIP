@@ -1,0 +1,220 @@
+{
+  "entities": {
+    "Receipt": {
+      "title": "Receipt",
+      "description": "Deposit and service receipt for IT devices and repair services",
+      "type": "object",
+      "properties": {
+        "receiptNo": {
+          "type": "string",
+          "description": "Sequential receipt number e.g. 000001",
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Full name of the customer",
+          "maxLength": 100
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Phone number of customer",
+          "maxLength": 30
+        },
+        "depositDate": {
+          "type": "string",
+          "description": "Deposit date in YYYY-MM-DD format",
+          "maxLength": 20
+        },
+        "depositTime": {
+          "type": "string",
+          "description": "Deposit time in HH:mm format",
+          "maxLength": 10
+        },
+        "receiverName": {
+          "type": "string",
+          "description": "Staff member who received the item",
+          "maxLength": 100
+        },
+        "documentNo": {
+          "type": "string",
+          "description": "Document or ID reference number",
+          "maxLength": 50
+        },
+        "category": {
+          "type": "string",
+          "description": "Service category",
+          "enum": ["computer", "printer", "phone", "cctv", "other"]
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total deposit amount in Lao Kip"
+        },
+        "totalAmountWords": {
+          "type": "string",
+          "description": "Total amount written in words",
+          "maxLength": 255
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of deposit",
+          "enum": ["pending", "in_progress", "completed", "picked_up", "cancelled"]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes or remarks",
+          "maxLength": 500
+        },
+        "originProvince": {
+          "type": "string",
+          "description": "Origin Province (ແຂວງຕົ້ນທາງ)",
+          "maxLength": 100
+        },
+        "originTransport": {
+          "type": "string",
+          "description": "Origin Transport Company (ຂົນສົ່ງຕົ້ນທາງ)",
+          "maxLength": 100
+        },
+        "destProvince": {
+          "type": "string",
+          "description": "Destination Province (ແຂວງປາຍທາງ)",
+          "maxLength": 100
+        },
+        "destDistrict": {
+          "type": "string",
+          "description": "Destination District (ເມືອງປາຍທາງ)",
+          "maxLength": 100
+        },
+        "destVillage": {
+          "type": "string",
+          "description": "Destination Village (ບ້ານປາຍທາງ)",
+          "maxLength": 100
+        },
+        "destTransport": {
+          "type": "string",
+          "description": "Destination Transport Company (ຂົນສົ່ງປາຍທາງ)",
+          "maxLength": 100
+        },
+        "trackingNo": {
+          "type": "string",
+          "description": "Transport consignment / tracking number",
+          "maxLength": 60
+        },
+        "shippingNotes": {
+          "type": "string",
+          "description": "Additional shipping instructions",
+          "maxLength": 300
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase UID of staff creator",
+          "maxLength": 128
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "Email of staff creator",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": [
+        "receiptNo",
+        "customerName",
+        "customerPhone",
+        "depositDate",
+        "totalAmount",
+        "status",
+        "userId"
+      ]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer contact record",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Customer full name",
+          "maxLength": 100
+        },
+        "phone": {
+          "type": "string",
+          "description": "Customer phone number",
+          "maxLength": 30
+        },
+        "address": {
+          "type": "string",
+          "description": "Address or location",
+          "maxLength": 200
+        },
+        "notes": {
+          "type": "string",
+          "description": "Customer notes",
+          "maxLength": 500
+        },
+        "userId": {
+          "type": "string",
+          "description": "Staff member who created the customer",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Updated timestamp"
+        }
+      },
+      "required": ["name", "phone", "userId"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Staff or Admin profile",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of user",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "System role",
+          "enum": ["admin", "staff"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Registration timestamp"
+        }
+      },
+      "required": ["name", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/receipts/{receiptId}": {
+      "schema": "Receipt",
+      "description": "Deposit receipts stored for NK Service"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customer contact directory"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles for staff and admins"
+    }
+  }
+}

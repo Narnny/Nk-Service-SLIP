@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common Security Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'narnny1994nk@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Receipt Validation
+    function isValidReceipt(data) {
+      return data.keys().hasAll(['receiptNo', 'customerName', 'customerPhone', 'depositDate', 'totalAmount', 'status', 'userId']) &&
+        data.receiptNo is string && data.receiptNo.size() > 0 && data.receiptNo.size() <= 32 &&
+        data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 100 &&
+        data.customerPhone is string && data.customerPhone.size() > 0 && data.customerPhone.size() <= 30 &&
+        data.depositDate is string && data.depositDate.size() <= 20 &&
+        data.totalAmount is number && data.totalAmount >= 0 &&
+        data.status in ['pending', 'in_progress', 'completed', 'picked_up', 'cancelled'] &&
+        data.userId is string && data.userId.size() <= 128 &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000)) &&
+        (!('originProvince' in data) || (data.originProvince is string && data.originProvince.size() <= 100)) &&
+        (!('originTransport' in data) || (data.originTransport is string && data.originTransport.size() <= 100)) &&
+        (!('destProvince' in data) || (data.destProvince is string && data.destProvince.size() <= 100)) &&
+        (!('destDistrict' in data) || (data.destDistrict is string && data.destDistrict.size() <= 100)) &&
+        (!('destVillage' in data) || (data.destVillage is string && data.destVillage.size() <= 100)) &&
+        (!('destTransport' in data) || (data.destTransport is string && data.destTransport.size() <= 100)) &&
+        (!('trackingNo' in data) || (data.trackingNo is string && data.trackingNo.size() <= 60)) &&
+        (!('shippingNotes' in data) || (data.shippingNotes is string && data.shippingNotes.size() <= 300)) &&
+        (!('depositTime' in data) || (data.depositTime is string && data.depositTime.size() <= 20)) &&
+        (!('receiverName' in data) || (data.receiverName is string && data.receiverName.size() <= 100)) &&
+        (!('documentNo' in data) || (data.documentNo is string && data.documentNo.size() <= 50)) &&
+        (!('totalAmountWords' in data) || (data.totalAmountWords is string && data.totalAmountWords.size() <= 255)) &&
+        (!('category' in data) || (data.category is string && data.category.size() <= 50));
+    }
+
+    // Customer Validation
+    function isValidCustomer(data) {
+      return data.keys().hasAll(['name', 'phone', 'userId']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.phone is string && data.phone.size() > 0 && data.phone.size() <= 30 &&
+        data.userId is string && data.userId.size() <= 128 &&
+        (!('address' in data) || (data.address is string && data.address.size() <= 200)) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 500));
+    }
+
+    // User Profile Validation
+    function isValidUser(data) {
+      return data.keys().hasAll(['name', 'email', 'role']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.email is string && data.email.size() > 0 && data.email.size() <= 100 &&
+        data.role in ['admin', 'staff'];
+    }
+
+    // Receipts Collection
+    match /receipts/{receiptId} {
+      // Allow get for QR code verification of individual receipts
+      allow get: if isValidId(receiptId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() &&
+        isValidId(receiptId) &&
+        isValidReceipt(incoming()) &&
+        incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() &&
+        isValidId(receiptId) &&
+        isValidReceipt(incoming()) &&
+        incoming().userId == existing().userId &&
+        incoming().receiptNo == existing().receiptNo &&
+        (isAdmin() || existing().userId == request.auth.uid);
+      allow delete: if isSignedIn() &&
+        isValidId(receiptId) &&
+        (isAdmin() || existing().userId == request.auth.uid);
+    }
+
+    // Customers Collection
+    match /customers/{customerId} {
+      allow get: if isSignedIn() && isValidId(customerId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() &&
+        isValidId(customerId) &&
+        isValidCustomer(incoming()) &&
+        incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() &&
+        isValidId(customerId) &&
+        isValidCustomer(incoming()) &&
+        (isAdmin() || existing().userId == request.auth.uid);
+      allow delete: if isSignedIn() &&
+        isValidId(customerId) &&
+        (isAdmin() || existing().userId == request.auth.uid);
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() &&
+        request.auth.uid == userId &&
+        isValidUser(incoming()) &&
+        (incoming().role == 'staff' || isAdmin());
+      allow update: if isSignedIn() &&
+        (isAdmin() || (request.auth.uid == userId && incoming().role == existing().role)) &&
+        isValidUser(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Admins Collection
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

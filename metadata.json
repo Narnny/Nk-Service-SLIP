@@ -1,0 +1,6 @@
+{
+  "name": "NK Service - ໃບບິນຝາກເຄື່ອງ (Deposit Receipt)",
+  "description": "ລະບົບສ້າງ ແລະ ຈັດການໃບບິນຝາກເຄື່ອງ/ສ້ອມແປງອຸປະກອນໄອທີ ຮ້ານ ເອັມເຄ ບໍລິການ (NK SERVICE) ພ້ອມຖານຂໍ້ມູນ Firebase",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
